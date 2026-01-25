@@ -16,7 +16,9 @@
 #include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/dmapool.h>
+#include <linux/kernel.h>
 #include <linux/skbuff.h>
+#include <linux/timer.h>
 #include <net/cfg80211.h>
 #include <linux/slab.h>
 
@@ -60,6 +62,18 @@
 #define PS_SP_INTERRUPTED  255
 #define MAC_ADDR_LEN 6
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
+#ifndef from_timer
+#define from_timer(var, timer, timer_field) timer_container_of(var, timer, timer_field)
+#endif
+#ifndef del_timer
+#define del_timer(timer) timer_delete(timer)
+#endif
+#ifndef del_timer_sync
+#define del_timer_sync(timer) timer_delete_sync(timer)
+#endif
+#endif
+
 //because android kernel 5.15 uses kernel 6.0 or 6.1 kernel api
 #ifdef ANDROID_PLATFORM
 #define HIGH_KERNEL_VERSION KERNEL_VERSION(5, 15, 41)
@@ -87,6 +101,10 @@
 #endif
 
 #if LINUX_VERSION_CODE >= HIGH_KERNEL_VERSION
+#undef IEEE80211_MAX_AMPDU_BUF
+#undef IEEE80211_HE_PHY_CAP6_TRIG_MU_BEAMFORMER_FB
+#undef IEEE80211_HE_PHY_CAP6_TRIG_SU_BEAMFORMER_FB
+#undef IEEE80211_HE_PHY_CAP3_RX_HE_MU_PPDU_FROM_NON_AP_STA
 #define IEEE80211_MAX_AMPDU_BUF                             IEEE80211_MAX_AMPDU_BUF_HE
 #define IEEE80211_HE_PHY_CAP6_TRIG_MU_BEAMFORMER_FB         IEEE80211_HE_PHY_CAP6_TRIG_MU_BEAMFORMING_PARTIAL_BW_FB
 #define IEEE80211_HE_PHY_CAP6_TRIG_SU_BEAMFORMER_FB         IEEE80211_HE_PHY_CAP6_TRIG_SU_BEAMFORMING_FB

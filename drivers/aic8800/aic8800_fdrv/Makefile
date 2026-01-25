@@ -1,6 +1,19 @@
 EXTRA_CFLAGS += $(USER_EXTRA_CFLAGS)
 EXTRA_CFLAGS += -Wno-implicit-fallthrough
 #EXTRA_CFLAGS += -Wno-unused-variable
+EXTRA_CFLAGS += -Wno-missing-prototypes
+ccflags-y += -Wno-missing-prototypes
+EXTRA_MAKE_VARS =
+
+ifneq ($(LLVM),)
+EXTRA_MAKE_VARS += LLVM=$(LLVM)
+endif
+ifneq ($(LLVM_IAS),)
+EXTRA_MAKE_VARS += LLVM_IAS=$(LLVM_IAS)
+endif
+ifneq ($(CC),)
+EXTRA_MAKE_VARS += CC=$(CC)
+endif
 
 RWNX_VERS_NUM := 6.4.3.0
 
@@ -369,7 +382,7 @@ endif
 all: modules
 modules:
 #	make -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) LLVM=1 LLVM_IAS=1 modules
-	make -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
+	make -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) $(EXTRA_MAKE_VARS) modules
 install:
 	mkdir -p $(MODDESTDIR)
 	install -p -m 644 $(MODULE_NAME).ko  $(MODDESTDIR)
@@ -381,4 +394,3 @@ uninstall:
 
 clean:
 	rm -rf *.o *.ko *.o.* *.mod.* modules.* Module.* .a* .o* .*.o.* *.mod .tmp* .cache.mk .modules.order.cmd .Module.symvers.cmd
-

@@ -22,6 +22,7 @@
 #include <linux/if_arp.h>
 #include <linux/ctype.h>
 #include <linux/random.h>
+#include <linux/timer.h>
 #include "rwnx_defs.h"
 #include "rwnx_dini.h"
 #include "rwnx_msg_tx.h"
@@ -3842,12 +3843,19 @@ cfg80211_chandef_identical(const struct cfg80211_chan_def *chandef1,
 #endif
 
 static int rwnx_cfg80211_set_monitor_channel(struct wiphy *wiphy,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+                                             struct net_device *dev,
+#endif
                                              struct cfg80211_chan_def *chandef)
 {
     struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
     struct rwnx_vif *rwnx_vif;
     struct me_config_monitor_cfm cfm;
     RWNX_DBG(RWNX_FN_ENTRY_STR);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+    (void)dev;
+#endif
 
     if (rwnx_hw->monitor_vif == RWNX_INVALID_VIF)
         return -EINVAL;
@@ -3952,8 +3960,17 @@ void rwnx_cfg80211_mgmt_frame_register(struct wiphy *wiphy,
  *	have changed. The actual parameter values are available in
  *	struct wiphy. If returning an error, no value should be changed.
  */
-static int rwnx_cfg80211_set_wiphy_params(struct wiphy *wiphy, u32 changed)
+static int rwnx_cfg80211_set_wiphy_params(struct wiphy *wiphy,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+                                          int radio_idx,
+#endif
+                                          u32 changed)
 {
+    (void)wiphy;
+    (void)changed;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+    (void)radio_idx;
+#endif
     return 0;
 }
 
@@ -3966,18 +3983,28 @@ static int rwnx_cfg80211_set_wiphy_params(struct wiphy *wiphy, u32 changed)
  *	(as advertised by the nl80211 feature flag.)
  */
 static int rwnx_cfg80211_set_tx_power(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
- struct wireless_dev *wdev,
-#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+                                      struct wireless_dev *wdev,
+                                      int radio_idx,
                                       enum nl80211_tx_power_setting type, int mbm)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
+                                      struct wireless_dev *wdev,
+                                      enum nl80211_tx_power_setting type, int mbm)
+#else
+                                      enum nl80211_tx_power_setting type, int mbm)
+#endif
 {
-    #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
     struct wireless_dev *wdev = NULL;
-    #endif
+#endif
     struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
     struct rwnx_vif *vif;
     s8 pwr;
     int res = 0;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+    (void)radio_idx;
+#endif
 
     if (type == NL80211_TX_POWER_AUTOMATIC) {
         pwr = 0x7f;
@@ -4367,7 +4394,11 @@ static int rwnx_cfg80211_get_channel(struct wiphy *wiphy,
     if (rwnx_vif->vif_index == rwnx_hw->monitor_vif)
     {
         //retrieve channel from firmware
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+        rwnx_cfg80211_set_monitor_channel(wiphy, NULL, NULL);
+#else
         rwnx_cfg80211_set_monitor_channel(wiphy, NULL);
+#endif
     }
 
     //Check if channel context is valid
@@ -4548,14 +4579,20 @@ static
 int rwnx_cfg80211_start_radar_detection(struct wiphy *wiphy,
                                         struct net_device *dev,
                                         struct cfg80211_chan_def *chandef
-                                    #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+                                        , u32 cac_time_ms, int link_id
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
                                         , u32 cac_time_ms
-                                    #endif
+#endif
                                         )
 {
     struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
     struct rwnx_vif *rwnx_vif = netdev_priv(dev);
     struct apm_start_cac_cfm cfm;
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+    (void)link_id;
+#endif
 
     #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
     rwnx_radar_start_cac(&rwnx_hw->radar, cac_time_ms, rwnx_vif);
@@ -8540,7 +8577,7 @@ static void __exit rwnx_mod_exit(void)
 module_init(rwnx_mod_init);
 module_exit(rwnx_mod_exit);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
-MODULE_IMPORT_NS(VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver);
+MODULE_IMPORT_NS("VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver");
 #endif
 MODULE_FIRMWARE(RWNX_CONFIG_FW_NAME);
 
@@ -8548,4 +8585,3 @@ MODULE_DESCRIPTION(RW_DRV_DESCRIPTION);
 MODULE_VERSION(RWNX_VERS_MOD);
 MODULE_AUTHOR(RW_DRV_COPYRIGHT " " RW_DRV_AUTHOR);
 MODULE_LICENSE("GPL");
-

@@ -26,6 +26,7 @@ The AIC8800 Linux Driver supports the AIC8800 chipset for wireless communication
 - WPA3 compatibility (for kernels supporting it)
 - MU-MIMO support (requires compatible firmware)
 - Wireless extensions support
+- USB combo Wi-Fi + Bluetooth devices (via `aic_load_fw` and `CONFIG_USB_BT`)
 
 ## Requirements
 
@@ -33,6 +34,7 @@ To compile and install this driver, ensure the following dependencies are instal
 
 - Linux kernel headers and development files
 - GCC and Make
+- Clang/LLVM (optional, for clang builds)
 - Git (for cloning the repository)
 
 ```bash
@@ -57,7 +59,13 @@ sudo dnf install kernel-devel kernel-headers gcc make git
    make
    ```
 
-   This will generate the necessary kernel module (`.ko` file).
+   This will generate the necessary kernel modules (`aic8800_fdrv.ko` and `aic_load_fw.ko`).
+
+   To build with clang/LLVM:
+
+   ```bash
+   make LLVM=1 LLVM_IAS=1 CC=clang
+   ```
 
 ### Installing the Driver
 
@@ -71,6 +79,12 @@ sudo dnf install kernel-devel kernel-headers gcc make git
 
    ```bash
    sudo modprobe aic8800_fdrv
+   ```
+
+   For USB combo Wi-Fi + Bluetooth devices, also load:
+
+   ```bash
+   sudo modprobe aic_load_fw
    ```
 
 5. To verify the driver is loaded, run:
@@ -100,4 +114,3 @@ You can also manage the wireless device using standard Linux network management 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
