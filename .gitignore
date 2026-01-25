@@ -21,8 +21,8 @@
 /.tmp_versions/
 
 # 自动生成的文件
-aic8800_linux_drvier/.config
-aic8800_linux_drvier/Makefile
+aic8800-linux-driver/.config
+aic8800-linux-driver/Makefile
 
 # CTags/Etags
 tags
@@ -55,3 +55,6 @@ drivers/aic8800/aic8800_fdrv/*.cmd
 drivers/aic8800/aic8800_fdrv/*.mod
 drivers/aic8800/aic_load_fw/*.cmd
 drivers/aic8800/aic_load_fw/*.mod
+
+# Local chat log
+converse.txt

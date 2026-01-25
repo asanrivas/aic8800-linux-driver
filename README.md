@@ -50,7 +50,7 @@ sudo dnf install kernel-devel kernel-headers gcc make git
 
    ```bash
    git clone git@github.com:goecho/aic8800_linux_drvier.git
-   cd aic8800_linux_drvier
+   cd aic8800-linux-driver
    ```
 
 2. Compile the driver:
