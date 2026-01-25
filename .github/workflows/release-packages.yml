@@ -1,0 +1,45 @@
+name: Release Packages
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential checkinstall dpkg rpm
+          sudo apt-get install -y "linux-headers-$(uname -r)" || sudo apt-get install -y linux-headers-generic
+
+      - name: Build DEB package
+        run: |
+          make deb
+
+      - name: Build RPM package (best effort)
+        run: |
+          make rpm || true
+
+      - name: Build Arch package (best effort)
+        run: |
+          make arch || true
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          find . -maxdepth 2 -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.pkg.tar.*' \) -exec cp -v {} dist/ \;
+          ls -la dist || true
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
