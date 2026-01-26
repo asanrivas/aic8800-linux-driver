@@ -58,3 +58,11 @@ drivers/aic8800/aic_load_fw/*.mod
 
 # Local chat log
 converse.txt
+
+# Package files (built packages should not be committed)
+*.deb
+*.rpm
+*.pkg.tar.*
+*.tar.gz
+*.tar.xz
+*.tgz

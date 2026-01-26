@@ -7,8 +7,10 @@ set -e
 # Source distribution detection
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/detect_distro.sh"
+source "${SCRIPT_DIR}/detect_compiler.sh"
 
 detect_distribution
+detect_kernel_compiler
 
 if [ "$DISTRO_FAMILY" != "redhat" ] && [ "$DISTRO_FAMILY" != "suse" ]; then
     echo "Warning: This script is designed for RPM-based distributions"
@@ -38,10 +40,17 @@ if ! command -v rpmbuild >/dev/null 2>&1; then
 fi
 
 # Build the driver first
-echo "Building driver..."
-cd "$(dirname "$(dirname "$SCRIPT_DIR")")"
+echo "Building driver with detected compiler: $KERNEL_CC"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
 make clean
-make build
+
+# Build with auto-detected compiler settings
+if [ "$KERNEL_CC" = "clang" ]; then
+    make build LLVM=$LLVM LLVM_IAS=$LLVM_IAS CC=$CC
+else
+    make build CC=$CC
+fi
 
 if [ $? -ne 0 ]; then
     echo "Error: Driver build failed"
@@ -80,13 +89,24 @@ $PACKAGE_LONG_DESCRIPTION
 
 %build
 cd drivers/aic8800
-make
+# Auto-detect and use appropriate compiler
+if grep -qi "clang" /proc/version 2>/dev/null; then
+    make LLVM=1 LLVM_IAS=1 CC=clang
+else
+    make CC=gcc
+fi
 
 %install
 cd drivers/aic8800
-make install DESTDIR=%{buildroot}
+# Auto-detect and use appropriate compiler
+if grep -qi "clang" /proc/version 2>/dev/null; then
+    make install DESTDIR=%{buildroot} LLVM=1 LLVM_IAS=1 CC=clang
+else
+    make install DESTDIR=%{buildroot} CC=gcc
+fi
 
 # Install firmware
+cd ../..
 mkdir -p %{buildroot}/lib/firmware/aic8800D80
 cp -r fw/aic8800D80/* %{buildroot}/lib/firmware/aic8800D80/
 
@@ -94,19 +114,32 @@ cp -r fw/aic8800D80/* %{buildroot}/lib/firmware/aic8800D80/
 mkdir -p %{buildroot}/etc/udev/rules.d
 cp tools/aic.rules %{buildroot}/etc/udev/rules.d/
 
+# Install setup scripts
+mkdir -p %{buildroot}/usr/share/aic8800-driver
+cp install_setup.sh %{buildroot}/usr/share/aic8800-driver/
+cp uninstall_setup.sh %{buildroot}/usr/share/aic8800-driver/
+cp -r fw %{buildroot}/usr/share/aic8800-driver/
+cp -r tools %{buildroot}/usr/share/aic8800-driver/
+
 %files
 /lib/modules/*/kernel/drivers/net/wireless/aic8800/
 /lib/firmware/aic8800D80/
 /etc/udev/rules.d/aic.rules
+/usr/share/aic8800-driver/
 
 %post
 /sbin/depmod -a
-udevadm trigger
-udevadm control --reload
+# Run install setup script
+cd /usr/share/aic8800-driver
+bash ./install_setup.sh || true
+
+%preun
+# Run uninstall setup script
+cd /usr/share/aic8800-driver
+bash ./uninstall_setup.sh || true
 
 %postun
 /sbin/depmod -a
-udevadm control --reload
 
 %changelog
 * $(date '+%a %b %d %Y') $PACKAGE_MAINTAINER - $PACKAGE_VERSION-$PACKAGE_RELEASE

@@ -1,3 +1,9 @@
+# Auto-detect kernel compiler
+SHELL := /bin/bash
+
+# Detect if kernel was built with clang
+KERNEL_COMPILER := $(shell cat /proc/version 2>/dev/null | grep -o "clang version" || echo "gcc")
+
 # Variables
 INSTALL_SCRIPT = ./install_setup.sh
 UNINSTALL_SCRIPT = ./uninstall_setup.sh
@@ -6,8 +12,26 @@ TARGET = aic8800_fdrv.ko
 PACKAGE_NAME = aic8800-driver
 PACKAGE_VERSION = 1.2.0
 PACKAGE_ARCH = $(shell dpkg --print-architecture 2>/dev/null || echo "amd64")
-EXTRA_MAKE_VARS =
 
+# Set compiler based on detection (can be overridden by user)
+ifeq ($(origin CC),default)
+    # CC is not set by user, auto-detect
+    ifeq ($(KERNEL_COMPILER),clang version)
+        LLVM := 1
+        LLVM_IAS := 1
+        CC := clang
+        $(info Detected kernel built with clang - using LLVM toolchain)
+    else
+        CC := gcc
+        $(info Detected kernel built with gcc)
+    endif
+else
+    # CC was set by user, respect it
+    $(info Using user-specified compiler: $(CC))
+endif
+
+# Build EXTRA_MAKE_VARS from detected or user-provided values
+EXTRA_MAKE_VARS =
 ifneq ($(LLVM),)
 EXTRA_MAKE_VARS += LLVM=$(LLVM)
 endif

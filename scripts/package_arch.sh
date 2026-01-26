@@ -7,8 +7,10 @@ set -e
 # Source distribution detection
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/detect_distro.sh"
+source "${SCRIPT_DIR}/detect_compiler.sh"
 
 detect_distribution
+detect_kernel_compiler
 
 if [ "$DISTRO_FAMILY" != "arch" ]; then
     echo "Warning: This script is designed for Arch-based distributions"
@@ -34,10 +36,17 @@ if ! command -v makepkg >/dev/null 2>&1; then
 fi
 
 # Build the driver first
-echo "Building driver..."
-cd "$(dirname "$(dirname "$SCRIPT_DIR")")"
+echo "Building driver with detected compiler: $KERNEL_CC"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
 make clean
-make build
+
+# Build with auto-detected compiler settings
+if [ "$KERNEL_CC" = "clang" ]; then
+    make build LLVM=$LLVM LLVM_IAS=$LLVM_IAS CC=$CC
+else
+    make build CC=$CC
+fi
 
 if [ $? -ne 0 ]; then
     echo "Error: Driver build failed"
@@ -65,7 +74,12 @@ sha256sums=('SKIP')
 build() {
     cd "\${srcdir}/\${pkgname}-\${pkgver}"
     cd drivers/aic8800
-    make
+    # Auto-detect and use appropriate compiler
+    if grep -qi "clang" /proc/version 2>/dev/null; then
+        make LLVM=1 LLVM_IAS=1 CC=clang
+    else
+        make CC=gcc
+    fi
 }
 
 package() {
@@ -73,7 +87,12 @@ package() {
 
     # Install kernel modules
     cd drivers/aic8800
-    make install DESTDIR="\${pkgdir}"
+    # Auto-detect and use appropriate compiler
+    if grep -qi "clang" /proc/version 2>/dev/null; then
+        make install DESTDIR="\${pkgdir}" LLVM=1 LLVM_IAS=1 CC=clang
+    else
+        make install DESTDIR="\${pkgdir}" CC=gcc
+    fi
 
     # Install firmware
     cd ../..
@@ -84,34 +103,34 @@ package() {
     mkdir -p "\${pkgdir}/etc/udev/rules.d"
     cp tools/aic.rules "\${pkgdir}/etc/udev/rules.d/"
 
-    # Install post-install script
-    mkdir -p "\${pkgdir}/usr/lib/systemd/system"
-    cat > "\${pkgdir}/usr/lib/systemd/system/aic8800-driver.service" << 'EOS'
-[Unit]
-Description=AIC8800 Wi-Fi Driver Setup
-After=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash -c 'udevadm trigger && udevadm control --reload'
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOS
+    # Install setup scripts
+    mkdir -p "\${pkgdir}/usr/share/aic8800-driver"
+    cp install_setup.sh "\${pkgdir}/usr/share/aic8800-driver/"
+    cp uninstall_setup.sh "\${pkgdir}/usr/share/aic8800-driver/"
+    cp -r fw "\${pkgdir}/usr/share/aic8800-driver/"
+    cp -r tools "\${pkgdir}/usr/share/aic8800-driver/"
 }
 
 post_install() {
-    echo "AIC8800 driver installed successfully!"
-    echo "Firmware installed to: /lib/firmware/aic8800D80/"
-    echo "Udev rules installed to: /etc/udev/rules.d/aic.rules"
-    echo "To load the driver, run: sudo modprobe aic8800_fdrv"
-    echo "To enable automatic loading: sudo systemctl enable aic8800-driver"
+    echo "==> Running AIC8800 driver setup..."
+    cd /usr/share/aic8800-driver
+    bash ./install_setup.sh || true
+    echo "==> AIC8800 driver installed successfully!"
+    echo "==> Modules will auto-load on next boot"
+}
+
+post_upgrade() {
+    post_install
+}
+
+pre_remove() {
+    echo "==> Running AIC8800 driver cleanup..."
+    cd /usr/share/aic8800-driver
+    bash ./uninstall_setup.sh || true
 }
 
 post_remove() {
-    echo "AIC8800 driver removed successfully!"
-    echo "To unload the driver, run: sudo modprobe -r aic8800_fdrv"
+    echo "==> AIC8800 driver removed successfully!"
 }
 EOF
 

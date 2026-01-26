@@ -7,21 +7,13 @@ set -e
 # Source distribution detection
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/detect_distro.sh"
+source "${SCRIPT_DIR}/detect_compiler.sh"
 
 detect_distribution
+detect_kernel_compiler
 
 echo "Creating packages for $DISTRO_NAME ($DISTRO_FAMILY) on $ARCH..."
-
-# Build the driver first
-echo "Building driver..."
-cd "$(dirname "$(dirname "$SCRIPT_DIR")")"
-make clean
-make build
-
-if [ $? -ne 0 ]; then
-    echo "Error: Driver build failed"
-    exit 1
-fi
+echo "Detected compiler: $KERNEL_CC"
 
 # Create packages based on detected distribution
 case "$DISTRO_FAMILY" in
