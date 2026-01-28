@@ -76,7 +76,6 @@ sudo checkinstall \
     --pkgarch="$PACKAGE_ARCH" \
     --maintainer="$PACKAGE_MAINTAINER" \
     --provides="aic8800-driver" \
-    --requires="linux-headers" \
     --install=no \
     --fstrans=no \
     --default \
