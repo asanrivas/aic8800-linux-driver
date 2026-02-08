@@ -2301,7 +2301,7 @@ static int aicwf_usb_chipmatch(struct aic_usb_dev *usb_dev, u16_l vid, u16_l pid
         usb_dev->chipid = PRODUCT_ID_AIC8800DW;
 		AICWFDBG(LOGINFO, "%s USE AIC8800DW\r\n", __func__);
         return 0;
-    }else if(pid == USB_PRODUCT_ID_AIC8800D81 || vid == USB_VENDOR_ID_TP || pid == USB_PRODUCT_ID_AIC8800D83
+    }else if(pid == USB_PRODUCT_ID_AIC8800D80 || pid == USB_PRODUCT_ID_AIC8800D81 || vid == USB_VENDOR_ID_TP || pid == USB_PRODUCT_ID_AIC8800D83
          || vid == USB_VENDOR_ID_TENDA || pid == USB_PRODUCT_ID_AIC8800D84 || pid == USB_PRODUCT_ID_AIC8800D85){
         usb_dev->chipid = PRODUCT_ID_AIC8800D81;
         aicwf_usb_rx_aggr = true;
@@ -2569,11 +2569,13 @@ static int aicwf_usb_reset_resume(struct usb_interface *intf)
 static struct usb_device_id aicwf_usb_id_table[] = {
 #ifndef CONFIG_USB_BT
     {USB_DEVICE(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800)},
+    {USB_DEVICE(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800D80)},
 #else
     {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8801, 0xff, 0xff, 0xff)},
     {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800D81, 0xff, 0xff, 0xff)},
     {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800D41, 0xff, 0xff, 0xff)},
     {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800DC, 0xff, 0xff, 0xff)},
+    {USB_DEVICE(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800D80)},
     {USB_DEVICE(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800DW)},
     {USB_DEVICE(USB_VENDOR_ID_AIC, USB_PRODUCT_ID_AIC8800D83)},
     {USB_DEVICE(USB_VENDOR_ID_TP, USB_PRODUCT_ID_TP)},
