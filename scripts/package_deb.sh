@@ -22,9 +22,20 @@ fi
 PACKAGE_NAME="aic8800-driver"
 PACKAGE_VERSION="1.2.0"
 PACKAGE_ARCH="$ARCH"
+ORIG_ARCH="$PACKAGE_ARCH"
 PACKAGE_MAINTAINER="AIC Driver Team <aic-driver@example.com>"
 PACKAGE_DESCRIPTION="AIC8800 Wi-Fi Driver for Linux"
 PACKAGE_LONG_DESCRIPTION="Linux kernel driver for AIC8800 wireless chipset supporting USB and SDIO interfaces with 802.11ac capabilities."
+
+# Normalize Debian architecture names
+if [ "$DISTRO_FAMILY" = "debian" ]; then
+    case "$PACKAGE_ARCH" in
+        x86_64) PACKAGE_ARCH="amd64" ;;
+        aarch64) PACKAGE_ARCH="arm64" ;;
+        armv7l) PACKAGE_ARCH="armhf" ;;
+        armv6l) PACKAGE_ARCH="armel" ;;
+    esac
+fi
 
 # Check dependencies
 echo "Checking dependencies..."
@@ -101,8 +112,8 @@ if [ -n "$DEB_FILE" ] && [ -f "$DEB_FILE" ]; then
     sudo dpkg-deb -x "$DEB_FILE" /tmp/aic8800-pkg
     sudo dpkg-deb --control "$DEB_FILE" /tmp/aic8800-pkg/DEBIAN
 
-    # Fix architecture in control file (x86_64 -> amd64)
-    sudo sed -i 's/Architecture: x86_64/Architecture: amd64/' /tmp/aic8800-pkg/DEBIAN/control
+    # Fix architecture in control file
+    sudo sed -i "s/^Architecture: .*/Architecture: ${PACKAGE_ARCH}/" /tmp/aic8800-pkg/DEBIAN/control
     sudo tee /tmp/aic8800-pkg/DEBIAN/postinst > /dev/null << 'POSTINST_EOF'
 #!/bin/bash
 set -e
@@ -134,17 +145,30 @@ PRERM_EOF
     # Rebuild the package
     sudo dpkg-deb --root-owner-group -b /tmp/aic8800-pkg "$DEB_BASENAME"
 
+    # Normalize filename to match Debian arch naming
+    DEB_BASENAME_FIXED="${DEB_BASENAME/_${ORIG_ARCH}/_${PACKAGE_ARCH}}"
+    if [ "$DEB_BASENAME_FIXED" != "$DEB_BASENAME" ]; then
+        sudo mv -f "$DEB_BASENAME" "$DEB_BASENAME_FIXED"
+        DEB_BASENAME="$DEB_BASENAME_FIXED"
+    fi
+
     # Cleanup
     sudo rm -rf /tmp/aic8800-pkg
 
     echo "DEB package updated with install/uninstall scripts!"
     echo "Final package: $DEB_BASENAME"
+    FINAL_DEB="$DEB_BASENAME"
 fi
 
 if [ $? -eq 0 ]; then
     echo "DEB package created successfully!"
-    echo "Package: ${PACKAGE_NAME}_${PACKAGE_VERSION}_${PACKAGE_ARCH}.deb"
-    echo "Install with: sudo dpkg -i ${PACKAGE_NAME}_${PACKAGE_VERSION}_${PACKAGE_ARCH}.deb"
+    if [ -n "$FINAL_DEB" ]; then
+        echo "Package: $FINAL_DEB"
+        echo "Install with: sudo dpkg -i $FINAL_DEB"
+    else
+        echo "Package: ${PACKAGE_NAME}_${PACKAGE_VERSION}_${PACKAGE_ARCH}.deb"
+        echo "Install with: sudo dpkg -i ${PACKAGE_NAME}_${PACKAGE_VERSION}_${PACKAGE_ARCH}.deb"
+    fi
 else
     echo "Error: Failed to create DEB package"
     exit 1
