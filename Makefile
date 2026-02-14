@@ -96,7 +96,6 @@ packages: build
 # Clean the build artifacts
 clean:
 	@echo "Cleaning the build artifacts..."
-	cd $(BUILD_DIR) && make clean
 	$(MAKE) -C $(BUILD_DIR) clean
 	@echo "Cleaning package files..."
 	rm -f *.deb *.tar.gz *.tgz
