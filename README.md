@@ -5,16 +5,27 @@ This project provides a Linux driver for the AIC8800 chipset, supporting both US
 ## Table of Contents
 - [Project Overview](#project-overview)
 - [Features](#features)
+- [Kernel Compatibility](#kernel-compatibility)
 - [Requirements](#requirements)
 - [Installation](#installation)
   - [Compiling the Driver](#compiling-the-driver)
   - [Installing the Driver](#installing-the-driver)
+  - [DKMS Installation (Recommended)](#dkms-installation-recommended)
 - [Usage](#usage)
 - [License](#license)
 
 ## Project Overview
 
 The AIC8800 Linux Driver supports the AIC8800 chipset for wireless communication, enabling functionality on devices using Linux-based operating systems. This driver is compatible with various kernel versions and can be used with different hardware configurations, such as USB or SDIO interfaces.
+
+## Kernel Compatibility
+
+The driver has been tested and builds cleanly against kernels from the 3.x series through 7.1.x, including:
+
+- Kernel 6.x (`in_hardirq()` / timer API changes)
+- Kernel 7.1+ (`cfg80211_ops` callbacks such as `add_key`, `add_station`, `get_station`, etc. now take `struct wireless_dev *` instead of `struct net_device *`; `struct ieee80211_mgmt` action-frame union layout changed)
+
+Version-specific differences are handled internally via `LINUX_VERSION_CODE` guards, so a single source tree supports all of the above without manual patching.
 
 ## Features
 
@@ -111,6 +122,37 @@ sudo dnf install kernel-devel kernel-headers gcc make git rpm-build
 
    ```bash
    lsmod | grep aic8800_fdrv
+   ```
+
+### DKMS Installation (Recommended)
+
+Installing via DKMS keeps the driver working automatically across kernel upgrades — it rebuilds and reinstalls the modules for every new kernel via apt hooks, instead of requiring a manual rebuild each time.
+
+1. Ensure `dkms` is installed:
+
+   ```bash
+   sudo apt install dkms
+   ```
+
+2. Register and build the driver with DKMS:
+
+   ```bash
+   sudo bash scripts/dkms-setup.sh
+   ```
+
+   This syncs the source to `/usr/src/aic8800-1.2.0`, registers it with DKMS, and builds/installs the modules for your currently running kernel.
+
+3. To (re)build for a specific installed kernel (e.g. after installing new kernel headers):
+
+   ```bash
+   sudo dkms build -m aic8800 -v 1.2.0 -k <kernel-version>
+   sudo dkms install -m aic8800 -v 1.2.0 -k <kernel-version> --force
+   ```
+
+4. Verify the module status:
+
+   ```bash
+   dkms status
    ```
 
 ### Package Installation (Recommended)

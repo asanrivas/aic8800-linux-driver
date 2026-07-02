@@ -16,6 +16,7 @@
 #define _RWNX_EVENTS_H
 
 #include <linux/tracepoint.h>
+#include "rwnx_defs.h"
 #ifndef CONFIG_RWNX_FHOST
 #include "rwnx_tx.h"
 #endif
@@ -189,7 +190,11 @@ DECLARE_EVENT_CLASS(
         __entry->sta_idx = sta_idx;
         __entry->frame_control = mgmt->frame_control;
         __entry->action_cat = mgmt->u.action.category;
+#if (LINUX_VERSION_CODE >= WDEV_CFG80211_OPS_KERNEL_VERSION)
+        __entry->action_type = mgmt->u.action.action_code;
+#else
         __entry->action_type = mgmt->u.action.u.wme_action.action_code;
+#endif
         __entry->action_p2p = *((u8 *)&mgmt->u.action.category
                                  + MGMT_ACTION_OUI_SUBTYPE_OFFSET);
                    ),

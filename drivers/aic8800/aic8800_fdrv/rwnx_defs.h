@@ -87,6 +87,12 @@
 #define HIGH_KERNEL_VERSION4 KERNEL_VERSION(6, 3, 0)
 #endif
 
+/* kernel 7.1 switched several cfg80211_ops callbacks (add_key, get_key,
+ * del_key, set_default_mgmt_key, add_station, del_station, change_station,
+ * get_station, dump_station) from struct net_device * to struct wireless_dev *
+ */
+#define WDEV_CFG80211_OPS_KERNEL_VERSION KERNEL_VERSION(7, 1, 0)
+
 #ifndef IEEE80211_MAX_AMPDU_BUF
 #define IEEE80211_MAX_AMPDU_BUF                             0x100
 #endif
