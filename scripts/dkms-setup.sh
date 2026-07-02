@@ -2,7 +2,7 @@
 set -e
 
 PACKAGE="aic8800"
-VERSION="1.2.0"
+VERSION="1.2.1"
 DKMS_SRC="/usr/src/${PACKAGE}-${VERSION}"
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 

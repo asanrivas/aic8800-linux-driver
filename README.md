@@ -140,13 +140,13 @@ Installing via DKMS keeps the driver working automatically across kernel upgrade
    sudo bash scripts/dkms-setup.sh
    ```
 
-   This syncs the source to `/usr/src/aic8800-1.2.0`, registers it with DKMS, and builds/installs the modules for your currently running kernel.
+   This syncs the source to `/usr/src/aic8800-1.2.1`, registers it with DKMS, and builds/installs the modules for your currently running kernel.
 
 3. To (re)build for a specific installed kernel (e.g. after installing new kernel headers):
 
    ```bash
-   sudo dkms build -m aic8800 -v 1.2.0 -k <kernel-version>
-   sudo dkms install -m aic8800 -v 1.2.0 -k <kernel-version> --force
+   sudo dkms build -m aic8800 -v 1.2.1 -k <kernel-version>
+   sudo dkms install -m aic8800 -v 1.2.1 -k <kernel-version> --force
    ```
 
 4. Verify the module status:
@@ -170,13 +170,13 @@ For easier installation and management, you can create distribution-specific pac
 2. Install the package:
 
    ```bash
-   sudo dpkg -i aic8800-driver_1.2.0-1_amd64.deb
+   sudo dpkg -i aic8800-driver_1.2.1-1_amd64.deb
    ```
 
    **Note:** If you encounter dependency warnings about linux-headers, you can safely ignore them with:
 
    ```bash
-   sudo dpkg -i --force-depends aic8800-driver_1.2.0-1_amd64.deb
+   sudo dpkg -i --force-depends aic8800-driver_1.2.1-1_amd64.deb
    ```
 
 #### Fedora/RHEL/Rocky/AlmaLinux (RPM Package)
@@ -190,9 +190,9 @@ For easier installation and management, you can create distribution-specific pac
 2. Install the package:
 
    ```bash
-   sudo rpm -i aic8800-driver-1.2.0-1.x86_64.rpm
+   sudo rpm -i aic8800-driver-1.2.1-1.x86_64.rpm
    # or
-   sudo dnf install aic8800-driver-1.2.0-1.x86_64.rpm
+   sudo dnf install aic8800-driver-1.2.1-1.x86_64.rpm
    ```
 
 #### Arch Linux/Manjaro/EndeavourOS (PKG Package)
@@ -206,7 +206,7 @@ For easier installation and management, you can create distribution-specific pac
 2. Install the package:
 
    ```bash
-   sudo pacman -U aic8800-driver-1.2.0-1-x86_64.pkg.tar.zst
+   sudo pacman -U aic8800-driver-1.2.1-1-x86_64.pkg.tar.zst
    ```
 
 #### Auto-detect and Build for Your Distribution

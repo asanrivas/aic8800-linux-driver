@@ -10,7 +10,7 @@ UNINSTALL_SCRIPT = ./uninstall_setup.sh
 BUILD_DIR = drivers/aic8800
 TARGET = aic8800_fdrv.ko
 PACKAGE_NAME = aic8800-driver
-PACKAGE_VERSION = 1.2.0
+PACKAGE_VERSION = 1.2.1
 PACKAGE_ARCH = $(shell dpkg --print-architecture 2>/dev/null || echo "amd64")
 
 # Set compiler based on detection (can be overridden by user)

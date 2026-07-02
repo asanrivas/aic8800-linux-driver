@@ -20,7 +20,7 @@ fi
 
 # Package configuration
 PACKAGE_NAME="aic8800-driver"
-PACKAGE_VERSION="1.2.0"
+PACKAGE_VERSION="1.2.1"
 PACKAGE_ARCH="$ARCH"
 ORIG_ARCH="$PACKAGE_ARCH"
 PACKAGE_MAINTAINER="AIC Driver Team <aic-driver@example.com>"
